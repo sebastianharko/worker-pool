@@ -2,7 +2,7 @@ package com.pirum.exercises.worker
 
 import akka.actor.ActorSystem
 import akka.pattern.after
-import scala.concurrent.Future
+import scala.concurrent.{Promise, Future}
 import scala.concurrent.duration.*
 import scala.util.{Failure, Success}
 
@@ -61,8 +61,8 @@ class HangingTask(taskId: TaskId)(implicit system: ActorSystem) extends Task {
 
   override val id: TaskId = taskId
 
-  override def execute: Future[Unit] = after(duration = 42.days, system.scheduler)(
-    Future.successful(())
-  )
+  override def execute: Future[Unit] = Promise[Unit].future // 'hanging' because nobody is ever going to complete
+  // the promise
+
 
 }
