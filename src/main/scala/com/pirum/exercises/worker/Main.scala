@@ -2,15 +2,16 @@ package com.pirum.exercises.worker
 
 import akka.actor.ActorSystem
 import akka.pattern.after
-import com.pirum.exercises.worker.Main2.tasks
+import com.pirum.exercises.worker.Main2.{system, tasks}
 
 import scala.concurrent.Future
-import scala.concurrent.duration.*
 import scala.concurrent.duration
+import scala.concurrent.duration.*
 import scala.util.{Failure, Success}
 
 // NOTE:
 // Main1 and Main2 contain the two examples in the original README
+// Main3 is an example with 60 tasks and 60 workers
 
 // Main1 is the first example in the original README
 object Main1 extends App {
@@ -34,8 +35,11 @@ object Main1 extends App {
   result.onComplete {
     case Failure(ex) =>
       println("Task runner failed ;-(")
+      system.terminate()
     case Success(summary) =>
       println(summary)
+      system.terminate()
+
   }
 
 }
@@ -65,8 +69,32 @@ object Main2 extends App {
   result.onComplete {
     case Failure(ex) =>
       println("Task runner failed ;-(")
+      system.terminate()
     case Success(summary) =>
       println(summary)
+      system.terminate()
+  }
+
+}
+
+// Main3 is an example with 60 tasks and 60 workers
+object Main3 extends App {
+
+  implicit val system: ActorSystem = ActorSystem()
+
+  import system.dispatcher
+
+  val tasks = (1 to 60).map(item => SuccessfulTask(TaskId(s"Task${item}"), successAfter = Some(5.seconds)))
+
+  val taskRunner = TaskRunnerImpl()
+  val result: Future[ExecutionSummary] = taskRunner.runTasks(tasks, timeout = 8.seconds, numWorkers = 60)
+  result.onComplete {
+    case Failure(ex) =>
+      println("Task runner failed ;-(")
+      system.terminate()
+    case Success(summary) =>
+      println(summary)
+      system.terminate()
   }
 
 }
